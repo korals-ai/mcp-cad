@@ -1,0 +1,11 @@
+# Runtime dependencies for the workspace-tool-cad sidecar image.
+# Keep in sync with [project.dependencies] in pyproject.toml.
+
+# MCP server SDK: FastMCP + Streamable HTTP transport. Exposes the cad_*
+# tools the workspace agent calls over http://localhost:<port>/mcp.
+mcp>=1.2,<2
+
+# ezdxf: read + modify DXF (R12-R2018). MIT, pure-Python (optional C-ext
+# builds if a compiler is present; not required). DWG is NOT handled here —
+# that's the deferred LibreDWG phase.
+ezdxf>=1.4
