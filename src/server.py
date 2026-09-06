@@ -7,7 +7,8 @@ co-located in the workspace pod, shares the tenant PVC, so files stay on the
 shared mount and the RPC carries only paths + verdicts.
 
 DXF only this phase; DWG read is a deferred follow-up (from-source LibreDWG —
-see docs/plan §6f). Standalone default port 8092 (office 8090, ocr 8091); the
+see docs/plan §6f). The bind port is REQUIRED via WORKSPACE_TOOL_PORT (cad 8092,
+office 8090, ocr 8091 in the roster); unset ⇒ exit at import. The
 operator injects WORKSPACE_TOOL_PORT for the real per-pod port.
 """
 
@@ -25,8 +26,8 @@ from src.cad_ops import CadError
 
 log = logging.getLogger("workspace-tool-cad")
 
-HOST = os.environ.get("WORKSPACE_TOOL_HOST", "0.0.0.0")  # noqa: S104 - pod-local, reached via localhost
-PORT = int(os.environ.get("WORKSPACE_TOOL_PORT", "8092"))
+HOST = "0.0.0.0"  # noqa: S104 - pod-local bind; nothing injects a host, the pod netns is the fence
+PORT = int(os.environ["WORKSPACE_TOOL_PORT"])
 
 mcp = FastMCP("cad", host=HOST, port=PORT)
 
