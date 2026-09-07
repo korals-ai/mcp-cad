@@ -19,6 +19,7 @@ import os
 import time
 from pathlib import Path
 
+import toollog
 from mcp.server.fastmcp import FastMCP
 
 from src import cad_ops
@@ -473,7 +474,7 @@ def cad_add_block_insert(
 
 def main() -> None:
     """Run the MCP server forever over Streamable HTTP. Blocks; entrypoint."""
-    logging.basicConfig(level=logging.INFO)
+    toollog.configure("cad")
     log.info(
         "workspace-tool-cad MCP server on %s:%d (/mcp) — DXF read/extract+edit+author",
         HOST,
