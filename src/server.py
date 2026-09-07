@@ -19,6 +19,7 @@ import os
 import time
 from pathlib import Path
 
+import loopwatch
 import toollog
 from mcp.server.fastmcp import FastMCP
 
@@ -30,7 +31,7 @@ log = logging.getLogger("workspace-tool-cad")
 HOST = "0.0.0.0"  # noqa: S104 - pod-local bind; nothing injects a host, the pod netns is the fence
 PORT = int(os.environ["WORKSPACE_TOOL_PORT"])
 
-mcp = FastMCP("cad", host=HOST, port=PORT)
+mcp = FastMCP("cad", host=HOST, port=PORT, lifespan=loopwatch.lifespan)
 
 
 def _log(op: str, src: str, started: float, *, error: Exception | None = None) -> None:
