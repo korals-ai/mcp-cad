@@ -33,6 +33,10 @@ PORT = int(os.environ["WORKSPACE_TOOL_PORT"])
 
 mcp = FastMCP("cad", host=HOST, port=PORT, lifespan=loopwatch.lifespan)
 
+# The liveness target. Answered by the loop above, so silence means wedged —
+# see loopwatch.serve_health.
+loopwatch.serve_health(mcp)
+
 
 def _log(op: str, src: str, started: float, *, error: Exception | None = None) -> None:
     """One structured line per call (keys match office/ocr) so Loki can chart
