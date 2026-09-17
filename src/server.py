@@ -20,6 +20,7 @@ import time
 from pathlib import Path
 
 import loopwatch
+import toolbound
 import toollog
 from mcp.server.fastmcp import FastMCP
 
@@ -37,6 +38,13 @@ mcp = FastMCP("cad", host=HOST, port=PORT, lifespan=loopwatch.lifespan)
 # see loopwatch.serve_health.
 loopwatch.serve_health(mcp)
 
+# See toolbound's module docstring for why every tool here runs off the event
+# loop, bounded, instead of inline. `ezdxf.readfile()`/write have NO clock of
+# their own — cad_ops bounds them by file size/entity count (MAX_DXF_BYTES,
+# MAX_DXF_ENTITIES), which caps memory, not time on a slow/wedged read — so
+# this constant is the ONLY ceiling every cad tool has today.
+_CAD_BOUND_S = 30.0
+
 
 def _log(op: str, src: str, started: float, *, error: Exception | None = None) -> None:
     """One structured line per call (keys match office/ocr) so Loki can chart
@@ -49,7 +57,7 @@ def _log(op: str, src: str, started: float, *, error: Exception | None = None) -
         log.warning("tool=cad op=%s outcome=error dur_ms=%d src=%s err=%s", op, dur_ms, name, error)
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_read(src: str) -> dict:
     """Read the content of a DXF CAD drawing (floor plan, camera diagram).
 
@@ -78,7 +86,7 @@ def cad_read(src: str) -> dict:
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_list_entities(src: str, kind: str = "") -> dict:
     """List the entities in a DXF drawing, optionally filtered to one type.
 
@@ -107,7 +115,7 @@ def cad_list_entities(src: str, kind: str = "") -> dict:
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_extract_geometry(src: str) -> dict:
     """Extract coordinates + lengths of the geometric primitives (LINE,
     LWPOLYLINE, CIRCLE, ARC) in a DXF — walls, room outlines, camera cones.
@@ -135,7 +143,7 @@ def cad_extract_geometry(src: str) -> dict:
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_measure(src: str) -> dict:
     """Measure a DXF drawing: overall bounding box (extents + size), per-type
     entity counts, per-layer counts, and the layer list — the one-call
@@ -161,7 +169,7 @@ def cad_measure(src: str) -> dict:
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_set_text(src: str, old: str, new: str) -> dict:
     """Replace text in a DXF: every TEXT/MTEXT whose value equals ``old``
     becomes ``new``. Writes ``<stem>.edited.dxf`` next to the source (never
@@ -188,7 +196,7 @@ def cad_set_text(src: str, old: str, new: str) -> dict:
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_rename_layer(src: str, old: str, new: str) -> dict:
     """Rename a layer in a DXF (entities on it follow). Writes
     ``<stem>.edited.dxf`` next to the source.
@@ -214,7 +222,7 @@ def cad_rename_layer(src: str, old: str, new: str) -> dict:
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_create_document(dst: str, overwrite: bool = False) -> dict:
     """Create a new, empty DXF — the starting point for authoring a drawing
     entity-by-entity with the other ``cad_add_*`` tools (e.g. reconstructing
@@ -248,7 +256,7 @@ def cad_create_document(dst: str, overwrite: bool = False) -> dict:
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_add_layer(path: str, name: str, color: int = 0) -> dict:
     """Add a named layer (e.g. ``"WALLS"``, ``"CAMERAS"``) to a DXF being
     authored, so later ``cad_add_*`` calls can target it.
@@ -274,7 +282,7 @@ def cad_add_layer(path: str, name: str, color: int = 0) -> dict:
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_add_line(path: str, start: list[float], end: list[float], layer: str = "0") -> dict:
     """Add a straight LINE (e.g. a wall segment) to a DXF being authored.
 
@@ -301,7 +309,7 @@ def cad_add_line(path: str, start: list[float], end: list[float], layer: str = "
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_add_polyline(
     path: str, points: list[list[float]], closed: bool = False, layer: str = "0"
 ) -> dict:
@@ -332,7 +340,7 @@ def cad_add_polyline(
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_add_circle(path: str, center: list[float], radius: float, layer: str = "0") -> dict:
     """Add a CIRCLE (e.g. a camera coverage marker) to a DXF being authored.
 
@@ -358,7 +366,7 @@ def cad_add_circle(path: str, center: list[float], radius: float, layer: str = "
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_add_arc(
     path: str,
     center: list[float],
@@ -396,7 +404,7 @@ def cad_add_arc(
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_add_text(
     path: str, text: str, position: list[float], height: float = 2.5, layer: str = "0"
 ) -> dict:
@@ -431,7 +439,7 @@ def cad_add_text(
     return out
 
 
-@mcp.tool()
+@toolbound.tool(mcp, timeout_s=_CAD_BOUND_S)
 def cad_add_block_insert(
     path: str,
     block_name: str,

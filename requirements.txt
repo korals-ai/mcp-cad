@@ -5,6 +5,11 @@
 # tools the workspace agent calls over http://localhost:<port>/mcp.
 mcp>=1.2,<2
 
+# The shared `toolbound` package (apps/workspace-tools/toolbound) runs every
+# @mcp.tool() off the event loop, bounded by a timeout — mcp pulls anyio
+# transitively, but a runtime import is declared here, not inherited.
+anyio>=4.0
+
 # ezdxf: read + modify DXF (R12-R2018). MIT, pure-Python (optional C-ext
 # builds if a compiler is present; not required). DWG is NOT handled here —
 # that's the deferred LibreDWG phase.
