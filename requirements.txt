@@ -10,6 +10,11 @@ mcp>=1.2,<2
 # transitively, but a runtime import is declared here, not inherited.
 anyio>=4.0
 
+# toolbound.TIMEOUT_TOTAL's own /metrics exporter, scraped by its PodMonitor
+# on the roster's metricsPort. Same reason as anyio: a real transitive import
+# from toolbound, declared here, not inherited.
+prometheus_client>=0.20
+
 # ezdxf: read + modify DXF (R12-R2018). MIT, pure-Python (optional C-ext
 # builds if a compiler is present; not required). DWG is NOT handled here —
 # that's the deferred LibreDWG phase.

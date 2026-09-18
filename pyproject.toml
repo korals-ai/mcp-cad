@@ -11,6 +11,7 @@ dependencies = [
     # The shared `toolbound` package runs every tool off the event loop,
     # bounded by a timeout — a real dependency, declared explicitly.
     "anyio>=4.0",
+    "prometheus_client>=0.20",  # toolbound.TIMEOUT_TOTAL's own /metrics exporter
     # ezdxf: read + modify DXF (MIT). Keep in sync with requirements.txt.
     "ezdxf>=1.4",
 ]
