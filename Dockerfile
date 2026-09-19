@@ -20,6 +20,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir -r requirements.txt
 
 FROM python:3.12-alpine
+RUN apk add --no-cache tini
 
 # ezdxf is pure-Python (its optional C-extensions build only if a compiler is
 # present, which we don't add in the runtime; the pure-Python fallback is fully
@@ -63,4 +64,6 @@ EXPOSE 8092
 
 USER tool
 
-ENTRYPOINT ["python", "-m", "src.server"]
+# PID 1 drops any signal it has no handler for, so our code never runs as
+# PID 1: tini does, forwarding SIGTERM and reaping orphans.
+ENTRYPOINT ["/sbin/tini", "--", "python", "-m", "src.server"]
